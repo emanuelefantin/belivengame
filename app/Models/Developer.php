@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,5 +36,12 @@ class Developer extends Model
     public function projects():HasMany
     {
         return $this->HasMany(Project::class);
+    }
+
+    protected function activeProject(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->projects()->where('development_completed', false)->exists()
+        );
     }
 }

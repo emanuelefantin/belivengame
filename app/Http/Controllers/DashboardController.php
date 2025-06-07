@@ -16,7 +16,11 @@ class DashboardController extends Controller
      */
     public function index(HttpRequest $request)
     {
-        $games = Game::with(['user'])
+        $games = Game::with([
+            'user',
+            'developers' => fn($developers) => $developers->where('hired', true),
+            'sellers' => fn($sellers) => $sellers->where('hired', true),
+        ])
             ->where('user_id', auth()->id())
             ->orderBy('id', 'desc')
             ->get();

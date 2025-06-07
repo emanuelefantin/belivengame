@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia';
 import moment from 'moment';
-import { TyProject } from '@/types/belivengame';
+import { TyDeveloper, TyGame, TyProject } from '@/types/belivengame';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { toHandlers } from 'vue';
+import { useEcho } from "@laravel/echo-vue";
 
 export const useGameStore = defineStore('game', {
     state: () => ({
+        game: {} as TyGame,
         initialized: false, //indica se il gioco è stato inizializzato con tutti i dati necessari
         elapsedTime: 0,
         dateCurrent: new Date(),
@@ -14,22 +16,20 @@ export const useGameStore = defineStore('game', {
         velocity: 0.5,
         timerInterval: null as ReturnType<typeof setInterval> | null,
         cashStart: 0,
-        //cash
         cashCurrent: 0,
-        cashDb:0, // Denaro salvato nel database
-        cashDelta: 0,
-        cashShow: 0,
-
+        cashMonthExpenses: 0,
         activeProjects: [] as TyProject[],
+        activeDeveloper: null as TyDeveloper | null, // Sviluppatore attivo selezionato
+        activeProject: null as TyProject | null, // Progetto attivo selezionato
         saveQueue: 0,
         savingInProgress: false, // Indica se il salvataggio è in corso
     }),
     actions: {
-        initGame(dateCurrent: Date | null = null) {
+        initGame() {
             // if (!this.initialized) {
             //     router.get('/dashboard');
             // }
-            this.startTimer(dateCurrent);
+            this.startTimer();
         },
         /**
          * Imposta i dati iniziali del gioco.
@@ -37,14 +37,18 @@ export const useGameStore = defineStore('game', {
          * @param game 
          */
         setStartData(game: any) {
-            this.dateCurrent = game.date_start ? new Date(game.date_start) : new Date();
+            this.game = game as TyGame; // Assicurati che il tipo sia TyGame
+            this.dateCurrent = game.date_current ? new Date(game.date_current) : new Date();
             this.cashStart = parseFloat(game.cash_start) || this.cashStart;
             this.cashCurrent = parseFloat(game.cash_current) || this.cashCurrent;
-            this.cashShow = this.cashCurrent; // Inizialmente mostra il denaro corrente
-            this.cashDb = this.cashCurrent; // Inizializza il denaro salvato nel database
+            this.cashMonthExpenses = parseFloat(game.cash_month_expenses) || this.cashMonthExpenses;
             this.activeProjects = game.projects || [];
-
+            //imposto il progetto come inizializzato
+            //in questo modo garantisco un solo punto di accesso per l'inizializzazione del gioco
+            //e disabilito i refresh di pagina
             this.initialized = true;
+
+            // console.log(moment(this.dateCurrent).startOf('month').format('DD-MM-YYYY'));
         },
         /**
          * Gestione del timer del gioco.
@@ -53,7 +57,7 @@ export const useGameStore = defineStore('game', {
          */
         startTimer(dateCurrent: Date | null = null) {
             if (this.timerInterval) return; // Prevengo avvio di un timer già in esecuzione
-            if(this.velocity <= 0) return; // Se la velocità è zero, non avviare il timer
+            if (this.velocity <= 0) return; // Se la velocità è zero, non avviare il timer
 
             if (dateCurrent !== null) {
                 this.dateCurrent = dateCurrent;
@@ -65,6 +69,7 @@ export const useGameStore = defineStore('game', {
                 this.dateCurrentFormatted = moment(this.dateCurrent).format('DD-MM-YYYY'); // Aggiorna la data formattata
 
                 this.updateProjects();
+                this.controlPaychecks();
             }, 1000 / this.velocity); // Imposta intervallo in base alla velocità
         },
         stopTimer() {
@@ -78,7 +83,7 @@ export const useGameStore = defineStore('game', {
             this.elapsedTime = 0;
         },
         setVelocity(velocity: number) {
-            if(velocity == 0){
+            if (velocity == 0) {
                 this.stopTimer();
                 this.velocity = 0;
                 toast.info('Il gioco è in pausa.');
@@ -93,6 +98,7 @@ export const useGameStore = defineStore('game', {
          * Logica per aggiornare i progetti attivi
          */
         updateProjects() {
+            let do_save = false;
             this.activeProjects.forEach(project => {
                 //se la generazione non è completata, incrementa il progresso della generazione
                 //per essere completata, il progresso deve raggiungere 10000
@@ -103,36 +109,76 @@ export const useGameStore = defineStore('game', {
                         project.generation_completed = true;
                         project.generation_completed_at = this.dateCurrent; // Imposta la data di completamento
 
-                        // this.cashCurrent += parseFloat(project.budget); // Aggiungi il budget del progetto al denaro corrente
-                        this.addCashDelta(parseFloat(project.budget)); // Aggiungi il budget del progetto al delta del denaro
-                        this.saveGame();
+                        do_save = true; // Indica che è necessario salvare il gioco
+
                         toast.success('Abbiamo firmato il contratto con: ' + project.name + '! Assegnalo a uno sviluppatore.');
                     }
                 }
+                //gestione dello sviluppo del progetto
+                if (project.development_completed !== true && project.developer_id) {
+                    project.development_progress += project.developer_xp / 10; // Incrementa il progresso dello sviluppo in base all'XP dello sviluppatore
+                    // Se il progresso raggiunge o supera 10000, segna lo sviluppo come completato
+                    if (project.development_progress >= 10000) {
+                        project.development_completed = true;
+                        project.development_completed_at = this.dateCurrent; // Imposta la data di completamento
+
+                        do_save = true; // Indica che è necessario salvare il gioco
+
+                        toast.success('Il progetto ' + project.name + ' è stato completato! Money on the road!');
+                    }
+                }
             });
+
+            if (do_save) {
+                this.saveGame();
+            }
+
         },
         addProjects(projects: TyProject[]) {
             projects.forEach(project => {
                 // Controlla se il progetto esiste già
-                const existingProject = this.activeProjects.find(p => p.id === project.id);
+                let existingProject = this.activeProjects.find(p => p.id === project.id);
                 if (!existingProject) {
                     this.activeProjects.push(project);
                 }
             });
         },
-
-        setCashDb(cash: number) {
-            this.cashDb = cash;
-            if(this.cashDelta == 0){
-                this.cashShow = this.cashDb; // Se non ci sono delta, mostra il denaro corrente
-            }else{
-                this.cashShow = this.cashCurrent + this.cashDelta; // Mostra il denaro corrente più il delta
+        assignDeveloperToProject(
+            activeProject: TyProject,
+            activeDeveloper: TyDeveloper
+        ) {
+            let project = this.activeProjects.find(p => p.id === activeProject.id);
+            if(project === undefined) {
+                toast.error('Progetto non trovato.');
+                return;
+            }
+            project.developer_id = activeDeveloper.id; // Assegna l'ID dello sviluppatore al progetto
+            project.developer_xp = activeDeveloper.xp; // Assegna l'XP dello sviluppatore al progetto
+        },
+        controlPaychecks() {
+            // Se è il primo giorno del mese, paga gli stipendi
+            if (moment(this.dateCurrent).isSame(moment(this.dateCurrent).startOf('month'), 'day')) {
+                router.post('/api/game/paychecks', {
+                    date_current: this.dateCurrent,
+                }, {
+                    onBefore: () => {
+                        // this.savingInProgress = true; // Imposta lo stato di salvataggio in corso
+                    },
+                    onFinish: () => {
+                    },
+                    onSuccess: (page) => {
+                        toast.info('Stipendi pagati...corri a fatturare!');
+                    },
+                    onError: () => {
+                        toast.error('Errore durante il pagamento degli stipendi.');
+                    }
+                });
             }
         },
-        addCashDelta(delta: number) {
-            this.cashDelta += delta;
-            this.cashCurrent += delta; // Aggiungi il delta al denaro corrente
-            this.cashShow = this.cashCurrent + this.cashDelta; // Mostra il denaro corrente più il delta
+
+        updateFromServer(data: {}) {
+            this.cashCurrent = parseFloat(data.game.cash_current) || this.cashCurrent;
+            this.cashMonthExpenses = parseFloat(data.game.cash_month_expenses) || this.cashMonthExpenses;
         },
 
         saveGame() {
@@ -145,7 +191,6 @@ export const useGameStore = defineStore('game', {
             // Invia i dati del gioco al server per il salvataggio
             router.post('/api/game/save', {
                 date_current: this.dateCurrent,
-                cash_current: this.cashCurrent,
                 projects: this.activeProjects,
             }, {
                 preserveState: false,
@@ -162,8 +207,8 @@ export const useGameStore = defineStore('game', {
                     }
                 },
                 onSuccess: (page) => {
-                    this.setCashDb(page.props.game.cash_current); // Aggiorna il denaro corrente dal server
-                    this.cashDelta = 0; // Reset del delta del denaro
+                    // this.setCashDb(page.props.game.cash_current); // Aggiorna il denaro corrente dal server
+                    // this.cashDelta = 0; // Reset del delta del denaro
                     toast.success('Gioco salvato con successo!');
                 },
                 onError: () => {

@@ -58,4 +58,10 @@ class Game extends Model
         $this->save();
     }
 
+    public function updateMonthExpenses(float $amount): void
+    {
+        $this->cash_month_expenses += $amount;
+        $this->save();
+    }
+
 }

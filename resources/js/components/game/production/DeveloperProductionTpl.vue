@@ -10,6 +10,7 @@ import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     item: TySeller;
+    active:boolean;
 }>();
 
 const perc_xp = computed(() => {
@@ -17,27 +18,12 @@ const perc_xp = computed(() => {
 });
 
 const gameStore = useGameStore();
-
-function createProject(item: TyDeveloper) {
-    router.visit('/api/game/project/create', {
-        method: 'post',
-        data: {
-            seller_id: item.id,
-            date: gameStore.dateCurrent,
-        },
-        onSuccess: (page) => {
-            toast.success('Nuovo cliente in vista! Il tuo commerciale sta lavorando per portare a casa un bel contratto firmato.');
-            gameStore.addProjects(page.props.projects as TyProject[]);
-        },
-        onError: (errors) => {},
-    });
-}
 </script>
 
 <template>
-    <div class="grid auto-rows-min items-center gap-4 p-2 border-b md:grid-cols-3 hover:bg-accent">
+    <div class="grid auto-rows-min items-center gap-4 border-b md:grid-cols-3 cursor-pointer hover:bg-accent" :class="{ 'bg-primary/40': props.active }">
         <div class="relative p-3">{{ props.item.name }}</div>
-        <div class="relative grid">
+        <div class="relative grid p-1">
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger as-child>
@@ -49,9 +35,8 @@ function createProject(item: TyDeveloper) {
                 </Tooltip>
             </TooltipProvider>
         </div>
-        <!-- <div class="relative p-1">{{ props.item.salary }} <span class="text-muted-foreground text-sm">€/mese</span></div> -->
         <div class="relative p-1 text-right">
-            <Button v-if="!props.item.active_project" @click="createProject(props.item)">Crea nuovo progetto</Button>
+            <span v-if="props.item.active_project">al lavoro...</span>
         </div>
     </div>
 </template>

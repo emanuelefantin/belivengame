@@ -10,7 +10,7 @@ const page = usePage<SharedData>();
 </script>
 
 <template>
-    <div class="cursor-pointer border p-4 text-center" :class="item.href === page.url ? 'bg-primary' : ''" @click="router.get(props.item.href)">
+    <div class="cursor-pointer border p-4 text-center" :class="page.url.startsWith(item.href) ? 'bg-primary' : ''" @click="router.get(props.item.href)">
         <component :is="item.icon" class="inline" /> {{ item.title }}
     </div>
 </template>

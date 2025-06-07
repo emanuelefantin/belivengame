@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\GameUpdated;
 use App\Helpers\GameHelper;
 use App\Http\Controllers\Traits\HasGame;
 use App\Http\Requests\StoreGameRequest;
@@ -54,12 +55,18 @@ class GameController extends Controller
             'hired' => false, // inizialmente non assunti
         ]);
 
+
+        $xp = rand(1000, 2000);
+        $salary = $xp / 4;
         $active_seller = Seller::factory()->create([
             'game_id' => $game->id,
             'hired' => true, // almeno un venditore deve essere assunto all'inizio
             'hired_at' => $date_start, // data di assunzione corrente
-            'salary' => rand(500, 800), // salario iniziale
+            'xp' => $xp, // xp
+            'salary' => $salary, // salario iniziale
         ]);
+
+        $game->updateMonthExpenses($active_seller->salary);
 
         //creo un progetto iniziale per il venditore attivo
         $project = new Project();
@@ -69,7 +76,7 @@ class GameController extends Controller
         $project->name = 'Il nostro primo progetto!';
         $project->generation_started_at = $date_start; // data di inizio generazione
         $project->budget = GameHelper::calcBudget($active_seller->xp); // budget iniziale basato sull'XP del venditore
-        $project->complexity = GameHelper::calcComplexity($active_seller->xp); // complessità iniziale basata sull'XP del venditore
+        $project->complexity = GameHelper::calcComplexity($active_seller->xp) * 0.8; // complessità iniziale basata sull'XP del venditore
         $project->save();
 
         //creazione Developers
@@ -78,12 +85,17 @@ class GameController extends Controller
             'hired' => false, // inizialmente non assunti
         ]);
 
-        Developer::factory(1)->create([
+        $xp = rand(1000, 2000);
+        $salary = $xp / 4;
+        $active_developer = Developer::factory()->create([
             'game_id' => $game->id,
             'hired' => true, // almeno un sviluppatore deve essere assunto all'inizio
             'hired_at' => $date_start, // data di assunzione corrente
-            'salary' => rand(500, 800), // salario iniziale
+            'xp' => $xp, // xp
+            'salary' => $salary, // salario iniziale
         ]);
+
+        $game->updateMonthExpenses($active_developer->salary);
 
         $request->session()->put('current_game_id', $game->id);
 
@@ -93,18 +105,28 @@ class GameController extends Controller
     /**
      * Creazione di una nuova partita.
      */
-    public function store(StoreGameRequest $request) {
+    public function store(StoreGameRequest $request)
+    {
         $date_current = $request->input('date_current');
-        $cash_current = $request->input('cash_current');
         $projects = $request->input('projects', []);
 
         $game = $this->getGame($request);
+        $cash_delta = 0;
 
         // Aggiorno i progetti associati al gioco
         foreach ($projects as $projectData) {
             $project = Project::find($projectData['id']);
             if ($project && $project->game_id === $game->id) {
-                
+                //controllo se un progetto passa dallo stato di sviluppo a completato
+                if (!$project->development_completed && $projectData['development_completed']) {
+                    //imposta il progetto come completato
+                    $project->completed = true;
+                    $project->completed_at = Carbon::parse($date_current);
+
+                    // aggiungo il budget del progetto completato al cash
+                    $cash_delta += $project->budget;
+                }
+
                 $project->generation_completed = $projectData['generation_completed'] ?? false;
                 $project->generation_progress = $projectData['generation_progress'] ?? 0;
                 $project->generation_started_at = $projectData['generation_started_at'] ?? null;
@@ -117,12 +139,31 @@ class GameController extends Controller
                 $project->save();
             }
         }
-        
+
         $game->date_current = Carbon::parse($date_current);
-        $game->cash_current = (float) $cash_current;
+        $game->cash_current = $game->cash_current + $cash_delta;
         $game->save();
-        
+
+        //aggiorno i dati di gioco
+        GameUpdated::dispatch($game);
+
         return redirect()->back();
+    }
+
+    /**
+     * Paga gli stipendi ai venditori e agli sviluppatori.
+     *
+     * @return void
+     */
+    public function paychecks(Request $request)
+    {
+        $date_current = $request->input('date_current');
+        $game = $this->getGame($request);
+        // sottraggo il totale degli stipendi dal cash corrente del gioco
+        $game->cash_current -= $game->cash_month_expenses;
+        $game->save();
+        //aggiorno i dati di gioco
+        GameUpdated::dispatch($game);
     }
 
     /**
@@ -135,42 +176,5 @@ class GameController extends Controller
     {
         $this->getGame($request);
         return to_route('game.production', ['init_game' => true])->with('success', 'Riprendendo la partita...');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function production(Request $request)
-    {
-        $init_game = $request->input('init_game', false);
-        $game = $this->getGame($request);
-        return Inertia::render('game/Production', [
-            'game' => $game,
-            'init_game' => $init_game,
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Game $game)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateGameRequest $request, Game $game)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Game $game)
-    {
-        //
     }
 }

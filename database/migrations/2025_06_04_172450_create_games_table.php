@@ -20,6 +20,7 @@ return new class extends Migration
             $table->timestamp('date_current')->nullable();
             $table->decimal('cash_start', 10, 2)->default(5000.00);
             $table->decimal('cash_current', 10, 2)->default(5000.00);
+            $table->decimal('cash_month_expenses', 10, 2)->default(0);
             $table->json('options')->nullable();
 
             $table->unsignedBigInteger('user_id');

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Project from '@/components/game/Project.vue';
+import Project from '@/components/game/sales/Project.vue';
 import SellerSaleTpl from '@/components/game/sales/SellerSaleTpl.vue';
 import AppLayout from '@/layouts/app/AppGameLayout.vue';
 import { useGameStore } from '@/stores/game';
@@ -10,7 +10,6 @@ import { Head, usePage } from '@inertiajs/vue3';
 // {{ page.props.user_count }}
 
 const page = usePage<SharedData>();
-// const game: TyGame = <TyGame>page.props.game;
 const sellers: TySeller[] = <TySeller[]>page.props.sellers;
 
 const gameStore = useGameStore();

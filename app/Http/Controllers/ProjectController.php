@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Helpers\GameHelper;
 use App\Http\Controllers\Traits\HasGame;
-use App\Http\Requests\StoreProjectRequest;
-use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use Faker\Factory;
 use Illuminate\Http\Request;
@@ -13,13 +11,6 @@ use Illuminate\Http\Request;
 class ProjectController extends Controller
 {
     use HasGame;
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
 
     public function create(Request $request)
     {
@@ -48,43 +39,59 @@ class ProjectController extends Controller
         return to_route('game.sales');
     }
 
-    // /**
-    //  * Store a newly created resource in storage.
-    //  */
-    // public function store(StoreProjectRequest $request)
-    // {
-    //     //
-    // }
+    /**
+     * Assegna uno sviluppatore a un progetto.
+     *
+     * @param Request $request
+     * @return void
+     */
+    public function assign(Request $request)
+    {
+        $game = $this->getGame($request);
+        $date = $request->input('date');
+        $project_id = $request->input('project_id');
+        $developer_id = $request->input('developer_id');
+        // Verifico se il venditore esiste e se è assunto
+        $developer = $game->developers()
+            ->where('id', $developer_id)
+            ->where('hired', true)
+            ->first()
+            ->append('active_project');
+            // ->where('active_project', false); // Verifico che lo sviluppatore non abbia già un progetto attivo
+        if (!$developer) {
+            return redirect()->back()->withErrors(['error' => 'Sviluppatore non trovato']);
+        }
+        if($developer->active_project){
+            return redirect()->back()->withErrors(['error' => 'Lo sviluppatore è già impegnato in un progetto.']);
+        }
+        //controllo esistenza del progetto
+        $project = $game->projects()->find($project_id);
+        if (!$project) {
+            return redirect()->back()->withErrors(['error' => 'Progetto non trovato.']);
+        }
 
-    // /**
-    //  * Display the specified resource.
-    //  */
-    // public function show(Project $project)
-    // {
-    //     //
-    // }
+        // Verifico se il progetto è già completo
+        if($project->is_complete || $project->development_completed) {
+            return redirect()->back()->withErrors(['error' => 'Il progetto è già completo.']);
+        }
 
-    // /**
-    //  * Show the form for editing the specified resource.
-    //  */
-    // public function edit(Project $project)
-    // {
-    //     //
-    // }
+        // Verifico se il progetto è stato generato (se è in progress non lo posso lavorare)
+        if(!$project->generation_completed) {
+            return redirect()->back()->withErrors(['error' => 'Il progetto non è ancora stato firmato dal cliente.']);
+        }
 
-    // /**
-    //  * Update the specified resource in storage.
-    //  */
-    // public function update(UpdateProjectRequest $request, Project $project)
-    // {
-    //     //
-    // }
+        // Verifico se il progetto ha già uno sviluppatore assegnato
+        if($project->developer_id) {
+            return redirect()->back()->withErrors(['error' => 'Il progetto ha già uno sviluppatore assegnato.']);
+        }
 
-    // /**
-    //  * Remove the specified resource from storage.
-    //  */
-    // public function destroy(Project $project)
-    // {
-    //     //
-    // }
+        //assegno lo sviluppatore al progetto
+        $project->developer_id = $developer->id; 
+        $project->developer_xp = $developer->xp; 
+        $project->development_started_at = $date; 
+        $project->save();
+
+        return redirect()->back();
+    }
+
 }

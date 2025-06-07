@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\GameUpdated;
 use App\Helpers\GameHelper;
 use App\Http\Controllers\Traits\HasGame;
 use App\Models\Developer;
@@ -44,8 +45,8 @@ class HrController extends Controller
     {
         $game = $this->getGame($request);
 
-        $sellers = $game->sellers()->where('hired', true)->get();
-        $developers = $game->developers()->where('hired', true)->get();
+        $sellers = $game->sellers()->where('hired', true)->get()->append('active_project');
+        $developers = $game->developers()->where('hired', true)->get()->append('active_project');
 
         return Inertia::render('game/HrHired', [
             'game' => $game,
@@ -72,6 +73,8 @@ class HrController extends Controller
         $item->hired_at = $date;
         $item->save();
 
+        //aggiorno la spesa mensile del gioco
+        $game->updateMonthExpenses($item->salary);
         // //se è un seller creo un nuovo progetto
         // if ($item instanceof \App\Models\Seller) {
         //     $faker = Factory::create();
@@ -86,7 +89,10 @@ class HrController extends Controller
         //     $project->save();
         // }
 
-         $this->_repopulateSellersAndDevelopers($game);
+        $this->_repopulateSellersAndDevelopers($game);
+
+        //aggiorno i dati di gioco
+        GameUpdated::dispatch($game);
 
         return to_route('game.hr');
     }
@@ -126,6 +132,11 @@ class HrController extends Controller
 
         $this->_repopulateSellersAndDevelopers($game);
 
+        $game->updateMonthExpenses(-$item->salary);
+
+        //aggiorno i dati di gioco
+        GameUpdated::dispatch($game);
+
         return to_route('game.hr.hired');
     }
 
@@ -149,37 +160,5 @@ class HrController extends Controller
                 'hired' => false, 
             ]);
         }
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }

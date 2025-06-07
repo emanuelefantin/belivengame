@@ -1,25 +1,27 @@
-export interface TySeller{
-    id:number;
-    name?:string;
+export interface TySeller {
+    id: number;
+    name?: string;
     xp?: number;
-    salary? :number;
+    salary?: number;
     hired?: boolean;
     hired_at?: Date;
     fired_at?: Date;
+    active_project?: boolean;
 }
 
-export interface TyDeveloper{
-    id:number;
-    name?:string;
+export interface TyDeveloper {
+    id: number;
+    name?: string;
     xp?: number;
-    salary? :number;
+    salary?: number;
     hired?: boolean;
     hired_at?: Date;
     fired_at?: Date;
+    active_project?: boolean;
 }
 
-export interface TyProject{
-    id:number;
+export interface TyProject {
+    id: number;
     name?: string;
     budget?: number;
     complexity?: number;
@@ -40,7 +42,7 @@ export interface TyProject{
 
 
 export interface TyGame {
-    id:number;
+    id: number;
     name?: string;
     sellers: TySeller[];
     developers: TyDeveloper[];
@@ -49,6 +51,7 @@ export interface TyGame {
     date_current: Date;
     cash_start?: number;
     cash_current?: number;
+    cash_month_expenses?: number;
 }
 
 

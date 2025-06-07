@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('budget', 10, 2)->nullable();
             $table->unsignedSmallInteger('complexity')->default(0);
             $table->boolean('completed')->default(false);
+            $table->timestamp('completed_at')->nullable();
 
             $table->unsignedBigInteger('seller_id')->nullable();
             $table->foreign('seller_id')->references('id')->on('sellers')->onDelete('cascade');

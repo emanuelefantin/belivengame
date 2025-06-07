@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Redirect;
 /**
  * Trait comune per i controller che gestiscono il gioco.
  * Fornisce un metodo per ottenere il gioco corrente basato su ID o sessione
- * o reindirizza se non è selezionato o non esiste.
+ * o reindirizza alla dashboard se non è selezionato o non esiste.
+ * Esegue anche un controllo di autorizzazione per assicurarsi che il gioco appartenga all'utente autenticato.
  */
 trait HasGame
 {
@@ -40,7 +41,8 @@ trait HasGame
         if (!$game) {
             return redirect()->route('dashboard')->with('error', 'Game not found.')->send();
         }
-        // Check if the game belongs to the authenticated user
+
+        // Controllo che il Game appartenga all'utente autenticato
         if ($game->user_id !== auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
