@@ -28,13 +28,11 @@ class HrController extends Controller
         // e che non sono stati licenziati (fired_at è null)
         $sellers = $game->sellers()->where('hired', false)->whereNull('fired_at')->get();
         $developers = $game->developers()->where('hired', false)->whereNull('fired_at')->get();
-        // $projects = $game->projects()->where('completed', false)->get();
 
         return Inertia::render('game/Hr', [
             'game' => $game,
             'sellers' => $sellers,
             'developers' => $developers,
-            // 'projects' => $projects,
         ]);
     }
 
@@ -75,19 +73,6 @@ class HrController extends Controller
 
         //aggiorno la spesa mensile del gioco
         $game->updateMonthExpenses($item->salary);
-        // //se è un seller creo un nuovo progetto
-        // if ($item instanceof \App\Models\Seller) {
-        //     $faker = Factory::create();
-        //     $project = new Project();
-        //     $project->game_id = $game->id;
-        //     $project->seller_id = $item->id; // assegno il progetto al venditore attivo
-        //     $project->seller_xp = $item->xp; // assegno l'XP del venditore attivo
-        //     $project->name = $faker->company();
-        //     $project->generation_started_at = $date; // data di inizio generazione
-        //     $project->budget = GameHelper::calcBudget($item->xp); // budget basato sull'XP del venditore
-        //     $project->complexity = GameHelper::calcComplexity($item->xp); // complessità del progettobasata sull'XP del venditore
-        //     $project->save();
-        // }
 
         $this->_repopulateSellersAndDevelopers($game);
 
@@ -106,11 +91,21 @@ class HrController extends Controller
         $game = $this->getGame($request);
         $date = Carbon::parse($request->input('date'));
 
+
+
         if ($request->has('developer_id')) {
             $item = $game->developers()->findOrFail($request->input('developer_id'));
+            if ($item->projects()->where('development_completed', false)->count() > 0) {
+                return redirect()->back()->withErrors(['error' => 'La risorsa non può essere licenziata perché ha dei progetti attivi.']);
+            }
         } elseif ($request->has('seller_id')) {
             $item = $game->sellers()->findOrFail($request->input('seller_id'));
+            if ($item->projects()->where('generation_completed', false)->count() > 0) {
+                return redirect()->back()->withErrors(['error' => 'La risorsa non può essere licenziata perché ha dei progetti attivi.']);
+            }
         }
+
+
 
         $item->hired = false;
         $item->fired_at = $date;
@@ -151,13 +146,13 @@ class HrController extends Controller
         if ($game->developers()->where('hired', false)->whereNull('fired_at')->count() < 5) {
             Developer::factory(rand(5, 10))->create([
                 'game_id' => $game->id,
-                'hired' => false, 
+                'hired' => false,
             ]);
         }
         if ($game->sellers()->where('hired', false)->whereNull('fired_at')->count() < 5) {
             Seller::factory(rand(5, 10))->create([
                 'game_id' => $game->id,
-                'hired' => false, 
+                'hired' => false,
             ]);
         }
     }

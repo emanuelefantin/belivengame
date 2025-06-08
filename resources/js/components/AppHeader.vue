@@ -176,9 +176,9 @@ const rightNavItems: NavItem[] = [
                                 </Avatar>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" class="w-56">
+                        <!-- <DropdownMenuContent align="end" class="w-56">
                             <UserMenuContent :user="auth.user" />
-                        </DropdownMenuContent>
+                        </DropdownMenuContent> -->
                     </DropdownMenu>
                 </div>
             </div>

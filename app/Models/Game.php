@@ -22,8 +22,10 @@ class Game extends Model
     protected $casts = [
         'date_start' => 'datetime',
         'date_current' => 'datetime',
+        'date_end' => 'datetime',
         'cash_start' => 'decimal:2',
         'cash_current' => 'decimal:2',
+        'cash_month_expenses' => 'decimal:2',
     ];
 
     public function user():BelongsTo

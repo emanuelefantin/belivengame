@@ -6,8 +6,7 @@ import BottomNavigationBtn from '@/components/game/BottomNavigationBtn.vue';
 import GameSidebar from '@/components/GameSidebar.vue';
 import { Toaster } from '@/components/ui/sonner';
 import type { BreadcrumbItemType, NavItem } from '@/types';
-import { router } from '@inertiajs/vue3';
-import { BadgeEuro, Code, LayoutGrid, Users } from 'lucide-vue-next';
+import { Code, Handshake, Users } from 'lucide-vue-next';
 import 'vue-sonner/style.css'; // vue-sonner v2 requires this import
 
 interface Props {
@@ -27,7 +26,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Sales',
         href: '/game/sales',
-        icon: BadgeEuro,
+        icon: Handshake,
     },
     {
         title: 'HR',

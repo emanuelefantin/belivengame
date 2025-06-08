@@ -3,8 +3,6 @@ import moment from 'moment';
 import { TyDeveloper, TyGame, TyProject } from '@/types/belivengame';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { toHandlers } from 'vue';
-import { useEcho } from "@laravel/echo-vue";
 
 export const useGameStore = defineStore('game', {
     state: () => ({
@@ -23,12 +21,15 @@ export const useGameStore = defineStore('game', {
         activeProject: null as TyProject | null, // Progetto attivo selezionato
         saveQueue: 0,
         savingInProgress: false, // Indica se il salvataggio è in corso
+        //fine del gioco
+        gameEnd: false,
+        gameEndDialogOpen: false
     }),
     actions: {
         initGame() {
-            // if (!this.initialized) {
-            //     router.get('/dashboard');
-            // }
+            if (!this.initialized) {
+                router.get('/dashboard');
+            }
             this.startTimer();
         },
         /**
@@ -43,12 +44,24 @@ export const useGameStore = defineStore('game', {
             this.cashCurrent = parseFloat(game.cash_current) || this.cashCurrent;
             this.cashMonthExpenses = parseFloat(game.cash_month_expenses) || this.cashMonthExpenses;
             this.activeProjects = game.projects || [];
+            this.activeDeveloper = null;
+            this.activeProject = null;
+            this.gameEnd = false;
+            this.gameEndDialogOpen = false;
             //imposto il progetto come inizializzato
             //in questo modo garantisco un solo punto di accesso per l'inizializzazione del gioco
             //e disabilito i refresh di pagina
             this.initialized = true;
 
-            // console.log(moment(this.dateCurrent).startOf('month').format('DD-MM-YYYY'));
+            if (this.cashCurrent <= 0) {
+                this.setGameEnd();
+            }
+
+            if (this.velocity <= 0 && !this.gameEnd) {
+                setTimeout(() => {
+                    toast.info('Il gioco è in pausa. Imposta una velocità per iniziare.');
+                }, 1000);
+            }
         },
         /**
          * Gestione del timer del gioco.
@@ -82,6 +95,12 @@ export const useGameStore = defineStore('game', {
             this.stopTimer();
             this.elapsedTime = 0;
         },
+        /**
+         * Imposta la velocità del timer.
+         * Se la velocità è zero, ferma il timer e mostra un messaggio di pausa.
+         * Altrimenti, imposta la nuova velocità e riavvia il timer.
+         * @param velocity 
+         */
         setVelocity(velocity: number) {
             if (velocity == 0) {
                 this.stopTimer();
@@ -117,8 +136,8 @@ export const useGameStore = defineStore('game', {
                 //gestione dello sviluppo del progetto
                 if (project.development_completed !== true && project.developer_id) {
                     project.development_progress += project.developer_xp / 10; // Incrementa il progresso dello sviluppo in base all'XP dello sviluppatore
-                    // Se il progresso raggiunge o supera 10000, segna lo sviluppo come completato
-                    if (project.development_progress >= 10000) {
+                    // Se il progresso raggiunge o supera il valore complexity, segna lo sviluppo come completato
+                    if (project.development_progress >= project.complexity) {
                         project.development_completed = true;
                         project.development_completed_at = this.dateCurrent; // Imposta la data di completamento
 
@@ -143,20 +162,29 @@ export const useGameStore = defineStore('game', {
                 }
             });
         },
+        /**
+         * Assegna uno sviluppatore a un progetto attivo.
+         * Se il progetto non esiste, mostra un messaggio di errore.
+         * @param activeProject 
+         * @param activeDeveloper 
+         * @returns 
+         */
         assignDeveloperToProject(
             activeProject: TyProject,
             activeDeveloper: TyDeveloper
         ) {
             let project = this.activeProjects.find(p => p.id === activeProject.id);
-            if(project === undefined) {
+            if (project === undefined) {
                 toast.error('Progetto non trovato.');
                 return;
             }
             project.developer_id = activeDeveloper.id; // Assegna l'ID dello sviluppatore al progetto
             project.developer_xp = activeDeveloper.xp; // Assegna l'XP dello sviluppatore al progetto
         },
+        /**
+         * Se è il primo giorno del mese, paga gli stipendi
+         */
         controlPaychecks() {
-            // Se è il primo giorno del mese, paga gli stipendi
             if (moment(this.dateCurrent).isSame(moment(this.dateCurrent).startOf('month'), 'day')) {
                 router.post('/api/game/paychecks', {
                     date_current: this.dateCurrent,
@@ -175,13 +203,47 @@ export const useGameStore = defineStore('game', {
                 });
             }
         },
-
+        /**
+         * Imposta lo stato del gioco come terminato.
+         * Ferma il timer, imposta la velocità a 0 e mostra il dialogo di fine gioco.
+         */
+        setGameEnd() {
+            if (!this.gameEnd) {
+                this.velocity = 0;
+                this.stopTimer();
+                this.gameEnd = true;
+                this.gameEndDialogOpen = true;
+            }
+        },
+        /**
+         * Aggiorna lo stato del gioco con i dati ricevuti dal server (tramite websocket).
+         * Utilizza i dati del gioco per aggiornare le proprietà locali.
+         * @param data 
+         */
         updateFromServer(data: {}) {
             this.cashCurrent = parseFloat(data.game.cash_current) || this.cashCurrent;
             this.cashMonthExpenses = parseFloat(data.game.cash_month_expenses) || this.cashMonthExpenses;
+            //se finisco i soldi il gioco termina
+            if (this.cashCurrent <= 0) {
+                this.setGameEnd();
+            }
         },
+        /**
+         * Salva lo stato del gioco.
+         * Se `exit` è true, reindirizza alla dashboard dopo il salvataggio.
+         * Utilizza una coda per gestire i salvataggi multipli.
+         * @param exit 
+         * @returns 
+         */
+        saveGame(exit: boolean = false) {
+            //se il gioco è finito, non posso salvare
+            if (this.gameEnd) {
+                if (exit) {
+                    router.get('/dashboard');
+                }
+                return;
+            }
 
-        saveGame() {
             // Questo previene il salvataggio multiplo se un salvataggio è già in corso
             if (this.savingInProgress) {
                 this.saveQueue++;
@@ -203,13 +265,15 @@ export const useGameStore = defineStore('game', {
                     // Se ci sono salvataggi in coda eseguo un salvataggio unico
                     if (this.saveQueue > 0) {
                         this.saveQueue = 0; // Reset della coda
-                        this.saveGame(); // chiama ricorsivamente saveGame
+                        this.saveGame(exit); // chiama ricorsivamente saveGame
                     }
                 },
                 onSuccess: (page) => {
-                    // this.setCashDb(page.props.game.cash_current); // Aggiorna il denaro corrente dal server
-                    // this.cashDelta = 0; // Reset del delta del denaro
                     toast.success('Gioco salvato con successo!');
+                    // Se il gioco è stato salvato con successo e si sta uscendo, reindirizza alla dashboard
+                    if (exit) {
+                        router.get('/dashboard');
+                    }
                 },
                 onError: () => {
                     toast.error('Errore durante il salvataggio del gioco.');

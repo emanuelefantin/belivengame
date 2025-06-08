@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->timestamp('date_start')->nullable();
             $table->timestamp('date_current')->nullable();
+            $table->timestamp('date_end')->nullable();
             $table->decimal('cash_start', 10, 2)->default(5000.00);
             $table->decimal('cash_current', 10, 2)->default(5000.00);
             $table->decimal('cash_month_expenses', 10, 2)->default(0);

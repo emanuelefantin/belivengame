@@ -18,13 +18,6 @@ use Inertia\Inertia;
 class GameController extends Controller
 {
     use HasGame;
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
 
     /**
      * Show the form for creating a new resource.
@@ -42,6 +35,7 @@ class GameController extends Controller
 
         $date_start = now();
 
+        //crea un nuovo gioco
         $game = new Game($validated);
         $game->slug = str($validated['name'])->slug();
         $game->user_id = auth()->id();
@@ -55,7 +49,7 @@ class GameController extends Controller
             'hired' => false, // inizialmente non assunti
         ]);
 
-
+        //creazione di un Seller attivo
         $xp = rand(1000, 2000);
         $salary = $xp / 4;
         $active_seller = Seller::factory()->create([
@@ -76,7 +70,7 @@ class GameController extends Controller
         $project->name = 'Il nostro primo progetto!';
         $project->generation_started_at = $date_start; // data di inizio generazione
         $project->budget = GameHelper::calcBudget($active_seller->xp); // budget iniziale basato sull'XP del venditore
-        $project->complexity = GameHelper::calcComplexity($active_seller->xp) * 0.8; // complessità iniziale basata sull'XP del venditore
+        $project->complexity = GameHelper::calcComplexity($active_seller->xp) * 0.8; // complessità iniziale basata sull'XP del venditore. Per il primo progetto, la complessità è ridotta del 20%
         $project->save();
 
         //creazione Developers
@@ -85,6 +79,8 @@ class GameController extends Controller
             'hired' => false, // inizialmente non assunti
         ]);
 
+        //creazione di uno sviluppatore attivo
+        // assegno un XP casuale tra 1000 e 2000 e calcolo il salario come un quarto dell'XP
         $xp = rand(1000, 2000);
         $salary = $xp / 4;
         $active_developer = Developer::factory()->create([
@@ -103,7 +99,7 @@ class GameController extends Controller
     }
 
     /**
-     * Creazione di una nuova partita.
+     * Salvataggio dello stato del gioco.
      */
     public function store(StoreGameRequest $request)
     {
@@ -115,8 +111,30 @@ class GameController extends Controller
 
         // Aggiorno i progetti associati al gioco
         foreach ($projects as $projectData) {
-            $project = Project::find($projectData['id']);
+            $project = Project::with(['developer','seller'])->find($projectData['id']);
+            
             if ($project && $project->game_id === $game->id) {
+                // Controllo se la generazione del progetto è completata
+                if (!$project->generation_completed && $projectData['generation_completed']) {
+                    // Imposto il progetto come generato
+                    $project->generation_completed = true;
+
+                    // Aumento l'xp e lo stipendio del venditore assegnato al progetto
+                    $seller = $project->seller()->first();
+                    if ($seller) {
+                        $salary_gain = GameHelper::calcSalaryGain($project->complexity, $seller->xp, $seller->salary);
+
+                        $seller->xp += GameHelper::calcXpGain($project->complexity, $seller->xp);
+                        $seller->salary += $salary_gain;
+                        $seller->save();
+
+                        // Aggiorno le spese mensili del gioco
+                        $game->updateMonthExpenses($salary_gain);
+                    }
+                    //elimino il seller
+                    $project->seller_id = null;
+                }
+
                 //controllo se un progetto passa dallo stato di sviluppo a completato
                 if (!$project->development_completed && $projectData['development_completed']) {
                     //imposta il progetto come completato
@@ -125,6 +143,21 @@ class GameController extends Controller
 
                     // aggiungo il budget del progetto completato al cash
                     $cash_delta += $project->budget;
+
+                    //aumento l'xp e lo stipendio dello sviluppatore assegnato al progetto
+                    $developer = $project->developer()->first();
+                    if ($developer) {
+                        $salary_gain = GameHelper::calcSalaryGain($project->complexity, $developer->xp, $developer->salary);
+
+                        $developer->xp += GameHelper::calcXpGain($project->complexity, $developer->xp);
+                        $developer->salary += $salary_gain;
+                        $developer->save();
+
+                        //aggiorno le spese mensili del gioco
+                        $game->updateMonthExpenses($salary_gain);
+                    }
+                    //elimino lo sviluppatore
+                    $project->developer_id = null;
                 }
 
                 $project->generation_completed = $projectData['generation_completed'] ?? false;
@@ -142,6 +175,11 @@ class GameController extends Controller
 
         $game->date_current = Carbon::parse($date_current);
         $game->cash_current = $game->cash_current + $cash_delta;
+
+        if($game->cash_current <= 0) {
+            $game->date_end = $game->date_current;
+        }
+
         $game->save();
 
         //aggiorno i dati di gioco
@@ -161,6 +199,11 @@ class GameController extends Controller
         $game = $this->getGame($request);
         // sottraggo il totale degli stipendi dal cash corrente del gioco
         $game->cash_current -= $game->cash_month_expenses;
+
+        if($game->cash_current <= 0) {
+            $game->date_end = Carbon::parse($date_current);
+        }
+
         $game->save();
         //aggiorno i dati di gioco
         GameUpdated::dispatch($game);

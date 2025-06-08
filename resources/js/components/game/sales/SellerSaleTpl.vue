@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useGameStore } from '@/stores/game';
 import { TyDeveloper, TyProject, TySeller } from '@/types/belivengame';
 import { router } from '@inertiajs/vue3';
+import { Handshake } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -35,8 +36,11 @@ function createProject(item: TyDeveloper) {
 </script>
 
 <template>
-    <div class="grid auto-rows-min items-center gap-4 p-2 border-b md:grid-cols-3 hover:bg-accent">
-        <div class="relative p-3">{{ props.item.name }}</div>
+    <div class="hover:bg-accent grid auto-rows-min items-center gap-4 border-b p-2 md:grid-cols-3">
+        <div class="relative p-3">
+            <Handshake class="mr-2 inline-block w-4 h-4" />
+            {{ props.item.name }}
+        </div>
         <div class="relative grid">
             <TooltipProvider>
                 <Tooltip>
@@ -49,9 +53,9 @@ function createProject(item: TyDeveloper) {
                 </Tooltip>
             </TooltipProvider>
         </div>
-        <!-- <div class="relative p-1">{{ props.item.salary }} <span class="text-muted-foreground text-sm">€/mese</span></div> -->
         <div class="relative p-1 text-right">
-            <Button v-if="!props.item.active_project" @click="createProject(props.item)">Crea nuovo progetto</Button>
+            <Button v-if="!props.item.active_project && !gameStore.gameEnd" @click="createProject(props.item)">Crea nuovo progetto</Button>
+            <span v-if="props.item.active_project && !gameStore.gameEnd">in riunione...</span>
         </div>
     </div>
 </template>

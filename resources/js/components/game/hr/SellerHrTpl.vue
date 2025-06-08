@@ -17,6 +17,7 @@ import { formatMoney } from '@/lib/utils';
 import { useGameStore } from '@/stores/game';
 import { TySeller } from '@/types/belivengame';
 import { router } from '@inertiajs/vue3';
+import { Handshake } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -39,9 +40,10 @@ function hire(item: TySeller) {
         },
         onSuccess: (page) => {
             toast.success('Yeee! Adesso hai un nuovo commerciale nel tuo team');
-            // gameStore.addProjects(page.props.projects as TyProject[]);
         },
-        onError: (errors) => {},
+        onError: (errors) => {
+            toast.error(errors.error);
+        },
     });
 }
 function fire(item: TySeller) {
@@ -52,17 +54,21 @@ function fire(item: TySeller) {
             date: gameStore.dateCurrent,
         },
         onSuccess: (page) => {
-            // gameStore.setCashDb(page.props.game.cash_current); // Aggiorna il denaro corrente dal server
             toast.success('Commerciale licenziato...e adesso chi lo sostituisce?');
         },
-        onError: (errors) => {},
+        onError: (errors) => {
+            toast.error(errors.error);
+        },
     });
 }
 </script>
 
 <template>
-    <div class="grid auto-rows-min items-center gap-4 border md:grid-cols-4">
-        <div class="relative p-1">{{ props.item.name }}</div>
+    <div class="grid auto-rows-min items-center gap-4 border-b grid-cols-4">
+        <div class="relative p-3">
+            <Handshake class="mr-2 inline-block w-4 h-4" />
+            {{ props.item.name }}
+        </div>
         <div class="relative grid p-1">
             <TooltipProvider>
                 <Tooltip>
@@ -77,10 +83,10 @@ function fire(item: TySeller) {
         </div>
         <div class="relative p-1">{{ formatMoney(props.item.salary) }} <span class="text-muted-foreground text-sm">/mese</span></div>
         <div class="relative p-1 text-right">
-            <Button v-if="props.item.hired == false" @click="hire(props.item)">Assumi</Button>
+            <Button v-if="(props.item.hired == false) && !gameStore.gameEnd" @click="hire(props.item)">Assumi</Button>
 
             <span v-if="props.item.active_project">Sta lavorando...</span>
-            <AlertDialog v-if="props.item.hired == true && !props.item.active_project">
+            <AlertDialog v-if="props.item.hired == true && !props.item.active_project && !gameStore.gameEnd">
                 <AlertDialogTrigger>
                     <Button>Licenzia</Button>
                 </AlertDialogTrigger>

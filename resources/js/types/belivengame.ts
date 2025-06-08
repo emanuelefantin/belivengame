@@ -26,6 +26,7 @@ export interface TyProject {
     budget?: number;
     complexity?: number;
     completed?: boolean;
+    completed_at?:Date;
     seller_id: number;
     seller_xp: number;
     generation_progress?: number;
@@ -38,6 +39,7 @@ export interface TyProject {
     development_started_at?: Date;
     development_completed_at?: Date;
     development_completed?: boolean;
+    game_id: number;
 }
 
 
@@ -49,6 +51,7 @@ export interface TyGame {
     projects: TyProject[];
     date_start: Date;
     date_current: Date;
+    date_end: Date;
     cash_start?: number;
     cash_current?: number;
     cash_month_expenses?: number;

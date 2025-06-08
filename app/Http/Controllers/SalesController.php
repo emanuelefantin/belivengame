@@ -16,7 +16,8 @@ class SalesController extends Controller
     public function index(Request $request)
     {
         $game = $this->getGame($request);
-        $sellers = $game->sellers()->where('hired', true)->get()->append('active_project');
+        $sellers = $game->sellers()->where('hired', true)->get()->append('active_project')->sortBy('active_project')->values();
+
         $projects = $game->projects()->where('generation_completed', false)->get();
         // $projects = $game->projects()->where('completed', false)->get();
 

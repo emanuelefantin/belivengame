@@ -2,7 +2,6 @@
 import DeveloperHrTpl from '@/components/game/hr/DeveloperHrTpl.vue';
 import SellerHrTpl from '@/components/game/hr/SellerHrTpl.vue';
 import Button from '@/components/ui/button/Button.vue';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import AppLayout from '@/layouts/app/AppGameLayout.vue';
 import { useGameStore } from '@/stores/game';
 import { SharedData } from '@/types';
@@ -19,37 +18,55 @@ gameStore.initGame();
 </script>
 
 <template>
-    <Head title="Hr" />
+    <Head title="Hr - Il tuo team" />
 
     <AppLayout>
-        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="grid auto-rows-min gap-4 md:grid-cols-2">
-                <div>
-                    <h1 class="text-xl font-semibold">Il tuo team</h1>
-                    <p class="text-muted-foreground">Commerciali e sviluppatori che stanno lavorando per te</p>
-                </div>
-                <div class="flex items-center justify-end">
-                    <Button class="btn btn-primary" @click="router.get('/game/hr')"> Scopri nuovi talenti </Button>
+        <div class="flex flex-col" style="height: calc(100vh - 125px)">
+            <div class="p-4">
+                <div class="grid auto-rows-min md:grid-cols-2">
+                    <div>
+                        <h1 class="text-xl font-semibold">Il tuo team</h1>
+                        <p class="text-muted-foreground">Guadagnano esperienza e aumento di stipendio per ogni progetto completato.</p>
+                    </div>
+                    <div class="flex items-center justify-end">
+                        <Button class="btn btn-primary" @click="router.get('/game/hr')"> Scopri nuovi talenti </Button>
+                    </div>
                 </div>
             </div>
-            <div class="grid auto-rows-min gap-4 md:grid-cols-2">
-                <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border">
-                    <div class="flex h-10 items-center justify-between border-b p-4">
-                        <h2 class="text-lg font-semibold">Commerciali</h2>
-                        <p class="text-muted-foreground">{{ sellers.length }} nel tuo team</p>
+            <div class="flex grid flex-grow grid-cols-2">
+                <div>
+                    <div class="flex flex-col" style="height: calc(100vh - 220px)">
+                        <div class="bg-primary/40">
+                            <div class="grid auto-rows-min gap-4">
+                                <div class="flex h-10 items-center justify-between p-4">
+                                    <h2 class="text-lg font-semibold">Commerciali</h2>
+                                    <p class="text-muted-foreground">{{ sellers.length }} nel tuo team</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex w-full flex-grow overflow-hidden">
+                            <div class="scrollbar flex h-full w-full flex-col overflow-hidden overflow-y-auto rounded-xl p-4">
+                                <SellerHrTpl v-for="person in sellers" :key="person.id" :item="person" />
+                            </div>
+                        </div>
                     </div>
-                    <ScrollArea class="h-99 w-full grid-cols-4">
-                        <SellerHrTpl v-for="person in sellers" :key="person.id" :item="person" />
-                    </ScrollArea>
                 </div>
-                <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border">
-                    <div class="flex h-10 items-center justify-between border-b p-4">
-                        <h2 class="text-lg font-semibold">Sviluppatori</h2>
-                        <p class="text-muted-foreground">{{ developers.length }} nel tuo team</p>
+                <div class="border-sidebar-border/70 dark:border-sidebar-border border-l">
+                    <div class="flex flex-col" style="height: calc(100vh - 220px)">
+                        <div class="bg-primary/40">
+                            <div class="grid auto-rows-min gap-4">
+                                <div class="flex h-10 items-center justify-between p-4">
+                                    <h2 class="text-lg font-semibold">Sviluppatori</h2>
+                                    <p class="text-muted-foreground">{{ developers.length }} nel tuo team</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex w-full flex-grow overflow-hidden">
+                            <div class="scrollbar flex h-full w-full flex-col overflow-hidden overflow-y-auto rounded-xl p-4">
+                                <DeveloperHrTpl v-for="person in developers" :key="person.id" :item="person" />
+                            </div>
+                        </div>
                     </div>
-                    <ScrollArea class="h-99 w-full grid-cols-4">
-                        <DeveloperHrTpl v-for="person in developers" :key="person.id" :item="person" />
-                    </ScrollArea>
                 </div>
             </div>
         </div>

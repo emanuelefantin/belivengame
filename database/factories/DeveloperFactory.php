@@ -19,7 +19,7 @@ class DeveloperFactory extends Factory
         $xp = $this->faker->numberBetween(1000, 10000);
         $salary = $xp / 2;
         return [
-            'name' => $this->faker->unique()->name(),
+            'name' => $this->faker->firstName().' ' . $this->faker->lastName(),
             'xp' => $xp,
             'salary' => $salary,
             'hired' => $this->faker->boolean(),

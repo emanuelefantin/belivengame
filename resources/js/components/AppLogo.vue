@@ -7,7 +7,7 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
         <!-- <AppLogoIcon class="size-5 fill-current text-white dark:text-black" /> -->
          <img src="./../../assets/beliven-game-symbol.png" alt="Belivengame Logo" class="" />
     </div>
-    <div class="ml-1 grid flex-1 text-left text-sm">
+    <div class="ml-3 grid flex-1 text-left text-sm">
         <span class="mb-0.5 truncate font-semibold leading-none">Beliven Game</span>
     </div>
 </template>

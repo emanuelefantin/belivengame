@@ -31,7 +31,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthLayout title="Reset password" description="Please enter your new password below">
+    <AuthLayout title="Reset password" description="Inserisci la tua nuova password per accedere al tuo account.">
         <Head title="Reset password" />
 
         <form @submit.prevent="submit">
@@ -58,7 +58,7 @@ const submit = () => {
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="password_confirmation"> Confirm Password </Label>
+                    <Label for="password_confirmation"> Conferma Password </Label>
                     <Input
                         id="password_confirmation"
                         type="password"
@@ -66,7 +66,7 @@ const submit = () => {
                         autocomplete="new-password"
                         v-model="form.password_confirmation"
                         class="mt-1 block w-full"
-                        placeholder="Confirm password"
+                        placeholder="Conferma password"
                     />
                     <InputError :message="form.errors.password_confirmation" />
                 </div>

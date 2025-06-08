@@ -22,6 +22,7 @@ class Project extends Model
         'budget' => 'decimal:2',
         'complexity' => 'integer',
         'completed' => 'boolean',
+        'completed_at' => 'datetime',
         'generation_progress' => 'integer',
         'generation_completed' => 'boolean',
         'generation_started_at' => 'datetime',
@@ -37,13 +38,13 @@ class Project extends Model
         return $this->belongsTo(Game::class);
     }
 
-    public function seller(): HasOne
+    public function seller(): BelongsTo
     {
-        return $this->hasOne(Seller::class);
+        return $this->BelongsTo(Seller::class);
     }
     
-    public function developer(): HasOne
+    public function developer(): BelongsTo
     {
-        return $this->hasOne(Developer::class);
+        return $this->BelongsTo(Developer::class);
     }
 }

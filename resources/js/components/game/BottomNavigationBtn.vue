@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Pulsanti di navigazione per la barra inferiore del gioco.
+ * Questi pulsanti sono utilizzati per navigare tra le diverse sezioni del gioco.
+ */
 import type { NavItem, SharedData } from '@/types';
 import { router, usePage } from '@inertiajs/vue3';
 
