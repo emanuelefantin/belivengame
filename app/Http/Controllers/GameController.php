@@ -49,6 +49,8 @@ class GameController extends Controller
         Seller::factory(rand(10, 20))->create([
             'game_id' => $game->id,
             'hired' => false, // inizialmente non assunti
+            'hired_at' => null, 
+            'fired_at' => null,
         ]);
 
         //creazione di un Seller attivo
@@ -60,6 +62,7 @@ class GameController extends Controller
             'hired_at' => $date_start, // data di assunzione corrente
             'xp' => $xp, // xp
             'salary' => $salary, // salario iniziale
+            'fired_at' => null,
         ]);
 
         $game->updateMonthExpenses($active_seller->salary);
@@ -79,6 +82,7 @@ class GameController extends Controller
         Developer::factory(rand(10, 20))->create([
             'game_id' => $game->id,
             'hired' => false, // inizialmente non assunti
+            'fired_at' => null,
         ]);
 
         //creazione di uno sviluppatore attivo
@@ -91,6 +95,7 @@ class GameController extends Controller
             'hired_at' => $date_start, // data di assunzione corrente
             'xp' => $xp, // xp
             'salary' => $salary, // salario iniziale
+            'fired_at' => null,
         ]);
 
         $game->updateMonthExpenses($active_developer->salary);
@@ -113,8 +118,8 @@ class GameController extends Controller
 
         // Aggiorno i progetti associati al gioco
         foreach ($projects as $projectData) {
-            $project = Project::with(['developer','seller'])->find($projectData['id']);
-            
+            $project = Project::with(['developer', 'seller'])->find($projectData['id']);
+
             if ($project && $project->game_id === $game->id) {
                 // Controllo se la generazione del progetto è completata
                 if (!$project->generation_completed && $projectData['generation_completed']) {
@@ -178,7 +183,7 @@ class GameController extends Controller
         $game->date_current = Carbon::parse($date_current);
         $game->cash_current = $game->cash_current + $cash_delta;
 
-        if($game->cash_current <= 0) {
+        if ($game->cash_current <= 0) {
             $game->date_end = $game->date_current;
         }
 
@@ -202,7 +207,7 @@ class GameController extends Controller
         // sottraggo il totale degli stipendi dal cash corrente del gioco
         $game->cash_current -= $game->cash_month_expenses;
 
-        if($game->cash_current <= 0) {
+        if ($game->cash_current <= 0) {
             $game->date_end = Carbon::parse($date_current);
         }
 

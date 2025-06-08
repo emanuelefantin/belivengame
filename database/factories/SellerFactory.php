@@ -16,7 +16,7 @@ class SellerFactory extends Factory
      */
     public function definition(): array
     {
-        $xp = $this->faker->numberBetween(1000, 10000);
+        $xp = $this->faker->numberBetween(500, 10000);
         $salary = $xp / 2;
         return [
             'name' => $this->faker->firstName().' ' . $this->faker->lastName(),
