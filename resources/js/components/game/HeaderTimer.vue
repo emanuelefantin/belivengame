@@ -28,10 +28,12 @@ useEcho(`game.${gameStore.game.id}`, 'GameUpdated', (e: {}) => {
     <div class="grid auto-rows-min gap-4">
         <div class="relative p-4 text-right">
             <div class="grid grid-cols-4 items-center gap-1 text-center">
-                <div class="relative p-1">Patrimonio {{ formatMoney(gameStore.cashCurrent) }}</div>
+                <div class="relative p-1" :class="gameStore.gameEnd ? 'text-red-400' : ''">
+                    Cassa {{ formatMoney(gameStore.cashCurrent) }}
+                </div>
                 <div class="relative p-1">
                     <!-- {{ gameStore.elapsedTime }} Giorni -->
-                    Spese/mese {{ formatMoney(gameStore.cashMonthExpenses) }}
+                    Spese {{ formatMoney(gameStore.cashMonthExpenses) }}/mese
                 </div>
                 <div class="relative p-1">
                     <CalendarDays class="mr-2 inline h-4 w-4" />
@@ -41,7 +43,7 @@ useEcho(`game.${gameStore.game.id}`, 'GameUpdated', (e: {}) => {
                     <div
                         class="inline h-10 w-10 cursor-pointer border p-1"
                         @click="gameStore.setVelocity(0)"
-                        :class="gameStore.velocity == 0 ? 'bg-primary/10' : ''"
+                        :class="gameStore.velocity == 0 ? 'bg-orange-400' : ''"
                     >
                         <PauseIcon class="inline" />
                     </div>

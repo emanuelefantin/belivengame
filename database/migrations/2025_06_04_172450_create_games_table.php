@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('games', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->string('name')->unique();
-            $table->string('slug')->unique();
+            $table->string('name');
+            $table->string('slug');
             $table->timestamp('date_start')->nullable();
             $table->timestamp('date_current')->nullable();
             $table->timestamp('date_end')->nullable();

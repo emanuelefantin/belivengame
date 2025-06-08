@@ -28,7 +28,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthBase title="Accedi al tuo account" description="Inserisci username e password per accedere al tuo account.">
+    <AuthBase title="Accedi al tuo account" description="Inserisci username e password per accedere al tuo account." >
         <Head title="Log in" />
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">

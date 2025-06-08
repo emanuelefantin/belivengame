@@ -40,6 +40,7 @@ export const useGameStore = defineStore('game', {
         setStartData(game: any) {
             this.game = game as TyGame; // Assicurati che il tipo sia TyGame
             this.dateCurrent = game.date_current ? new Date(game.date_current) : new Date();
+            this.dateCurrentFormatted = moment(this.dateCurrent).format('DD-MM-YYYY');
             this.cashStart = parseFloat(game.cash_start) || this.cashStart;
             this.cashCurrent = parseFloat(game.cash_current) || this.cashCurrent;
             this.cashMonthExpenses = parseFloat(game.cash_month_expenses) || this.cashMonthExpenses;
@@ -57,11 +58,13 @@ export const useGameStore = defineStore('game', {
                 this.setGameEnd();
             }
 
-            if (this.velocity <= 0 && !this.gameEnd) {
+            if ((this.velocity == 0) && !this.gameEnd) {
                 setTimeout(() => {
                     toast.info('Il gioco è in pausa. Imposta una velocità per iniziare.');
                 }, 1000);
             }
+
+            router.get('/game/production');
         },
         /**
          * Gestione del timer del gioco.
@@ -212,7 +215,7 @@ export const useGameStore = defineStore('game', {
                 this.velocity = 0;
                 this.stopTimer();
                 this.gameEnd = true;
-                this.gameEndDialogOpen = true;
+                // this.gameEndDialogOpen = true;
             }
         },
         /**
@@ -226,6 +229,9 @@ export const useGameStore = defineStore('game', {
             //se finisco i soldi il gioco termina
             if (this.cashCurrent <= 0) {
                 this.setGameEnd();
+                //salvo lo stato del gioco (gli avanzamenti dei progetti potrebbero non essere stati salvati)
+                this.saveGame();
+                this.gameEndDialogOpen = true;
             }
         },
         /**
@@ -236,12 +242,9 @@ export const useGameStore = defineStore('game', {
          * @returns 
          */
         saveGame(exit: boolean = false) {
-            //se il gioco è finito, non posso salvare
-            if (this.gameEnd) {
-                if (exit) {
-                    router.get('/dashboard');
-                }
-                return;
+            
+            if (this.gameEnd && exit) {
+                router.get('/dashboard');
             }
 
             // Questo previene il salvataggio multiplo se un salvataggio è già in corso

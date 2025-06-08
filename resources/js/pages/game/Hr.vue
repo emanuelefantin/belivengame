@@ -39,7 +39,7 @@ gameStore.initGame();
                         <div class="bg-primary/40 ">
                             <div class="grid auto-rows-min gap-4">
                                 <div class="flex h-10 items-center justify-between p-4">
-                                    <h2 class="text-lg font-semibold">Commerciali</h2>
+                                    <h2 class="text-lg font-semibold text-gray-500">Commerciali</h2>
                                     <p class="text-muted-foreground">{{ sellers.length }} disponibili</p>
                                 </div>
                             </div>
@@ -56,7 +56,7 @@ gameStore.initGame();
                         <div class="bg-primary/40 ">
                             <div class="grid auto-rows-min gap-4">
                                 <div class="flex h-10 items-center justify-between p-4">
-                                    <h2 class="text-lg font-semibold">Sviluppatori</h2>
+                                    <h2 class="text-lg font-semibold text-gray-500">Sviluppatori</h2>
                                     <p class="text-muted-foreground">{{ developers.length }} disponibili</p>
                                 </div>
                             </div>

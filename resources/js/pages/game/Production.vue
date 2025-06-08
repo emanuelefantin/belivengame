@@ -55,7 +55,7 @@ function assignDeveloperToProject() {
     <AppLayout>
         <div class="flex flex-col">
             <div class="h-25 items-center justify-between border-b p-4" v-if="!gameStore.gameEnd">
-                <p class="text-muted-foreground mb-2 text-center">Associa uno sviluppatore a un progetto cliccando su di essi.</p>
+                <p class="text-muted-foreground mb-2 text-center">Seleziona lo sviluppatore più adatto per il progetto e inizia la creazione!</p>
                 <div class="w-full text-center">
                     <span class="">
                         {{ gameStore.activeDeveloper ? `${gameStore.activeDeveloper.name}` : 'SELEZIONA UNO SVILUPPATORE' }}
@@ -97,7 +97,7 @@ function assignDeveloperToProject() {
 
                     <div class="self-center justify-self-center text-center" v-if="toDoProjects.length === 0 && !gameStore.gameEnd">
                         Non ci sono progetti da sviluppare e i tuoi Developers si stanno annioiando...<br />
-                        Completa un nuovo progetto per iniziare lo sviluppo!<br />
+                        Invia i tuoi commerciali a firmare nuovi contratti!<br />
 
                         <Button class="btn btn-primary mt-5" @click="router.get('/game/sales')"> Vedi le riunioni in corso </Button>
                     </div>

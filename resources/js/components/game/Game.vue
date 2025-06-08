@@ -3,17 +3,26 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { formatMoney } from '@/lib/utils';
 import { TyGame } from '@/types/belivengame';
 import { router } from '@inertiajs/vue3';
-import { BadgeEuroIcon, CircleX, CodeIcon, Handshake } from 'lucide-vue-next';
+import { BadgeEuroIcon, CalendarDays, CircleX, CodeIcon, Handshake } from 'lucide-vue-next';
+import moment from 'moment';
+import { computed } from 'vue';
 
 const props = defineProps<{
     item: TyGame;
 }>();
+
+const gameDays = computed(() => {
+    let days = moment(props.item.date_current).diff(moment(props.item.date_start), 'days');
+    return days.toLocaleString('it-IT', {
+        useGrouping: true,
+    });
+});
 </script>
 
 <template>
     <div
-        class="grid cursor-pointer content-center grid-cols-4 gap-4 border-b transition-colors duration-200 hover:bg-gray-100"
-        :class="{'text-red-500' : (props.item.cash_current < 0)}"
+        class="grid cursor-pointer grid-cols-5 content-center gap-4 border-b transition-colors duration-200 hover:bg-gray-100"
+        :class="{ 'text-red-500': props.item.cash_current < 0 }"
         @click="
             router.visit('/game/continue', {
                 method: 'post',
@@ -23,11 +32,23 @@ const props = defineProps<{
             })
         "
     >
-        <div class=" p-4 font-bold">
-            <CircleX class="mr-2 inline-block" />
-            {{ props.item.name }}
+        <div class="p-4 font-bold">
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <div class="truncate">{{ props.item.name }}</div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                       <p>{{ props.item.name }}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
         </div>
-        <div class="text-muted-foreground  p-4">
+        <div class="p-4 text-muted-foreground p-4">
+            <CalendarDays class="mr-2 inline-block" />
+            {{ gameDays }} Giorni
+        </div>
+        <div class="text-muted-foreground p-4">
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger as-child>
@@ -38,7 +59,7 @@ const props = defineProps<{
                 </Tooltip>
             </TooltipProvider>
         </div>
-        <div class="text-muted-foreground  p-4">
+        <div class="text-muted-foreground p-4">
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger as-child>
@@ -49,14 +70,14 @@ const props = defineProps<{
                 </Tooltip>
             </TooltipProvider>
         </div>
-        <div class=" p-4 text-right">
+        <div class="p-4 text-right">
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger as-child>
                         <BadgeEuroIcon class="mr-2 inline-block" />
                         {{ formatMoney(props.item.cash_current) }}
                     </TooltipTrigger>
-                    <TooltipContent> Patrimonio </TooltipContent>
+                    <TooltipContent> Cassa </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
         </div>

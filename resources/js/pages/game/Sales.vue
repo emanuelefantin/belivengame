@@ -41,7 +41,7 @@ const activeProjects = computed(() => {
                         <div class="bg-primary/40">
                             <div class="grid auto-rows-min gap-4">
                                 <div class="flex h-10 items-center justify-between p-4">
-                                    <h2 class="text-lg font-semibold">Commerciali</h2>
+                                    <h2 class="text-lg font-semibold text-gray-500">Commerciali</h2>
                                     <p class="text-muted-foreground">{{ sellers.length }} nel tuo team</p>
                                 </div>
                             </div>
@@ -58,7 +58,7 @@ const activeProjects = computed(() => {
                         <div class="bg-primary/40">
                             <div class="grid auto-rows-min gap-4">
                                 <div class="flex h-10 items-center justify-between p-4">
-                                    <h2 class="text-lg font-semibold">Progetti in corso</h2>
+                                    <h2 class="text-lg font-semibold text-gray-500">Progetti in corso</h2>
                                     <p class="text-muted-foreground">{{ activeProjects.length }}</p>
                                 </div>
                             </div>

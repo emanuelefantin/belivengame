@@ -20,6 +20,7 @@ configureEcho({
     enabledTransports: ['ws', 'wss'],
 });
 
+
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
     interface ImportMetaEnv {

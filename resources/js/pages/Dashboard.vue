@@ -23,6 +23,7 @@ const handleLogout = () => {
 
 const gameStore = useGameStore();
 gameStore.resetTimer();
+gameStore.$reset();
 </script>
 
 <template>
@@ -37,14 +38,14 @@ gameStore.resetTimer();
                         <div class="flex gap-1.5 justify-self-center">
                             <form @submit.prevent="form.post('/api/game/new')">
                                 <div class="flex gap-1.5">
-                                    <Input id="email" type="text" v-model="form.name" placeholder="Nome azienda" />
+                                    <Input id="email" type="text" v-model="form.name" placeholder="Nome azienda" maxlength="20"/>
                                     <Button type="submit" :disabled="form.processing"> Crea </Button>
                                 </div>
                             </form>
                         </div>
 
                         <div class="text-muted-foreground mt-8">
-                            Per iniziare una nuova partita, inserisci il nome della tua azienda e premi il pulsante "Crea".
+                            Per iniziare una nuova partita,<br> inserisci il nome della tua azienda<br> e premi il pulsante "Crea".
                         </div>
                         <div class="mt-15">
                             <Link class="mr-10" :href="route('profile.edit')" prefetch as="button">

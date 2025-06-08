@@ -29,11 +29,13 @@ class GameController extends Controller
         ]);
 
         //dopo la validazione faccio un check manuale per evitare nomi duplicati
-        if (Game::where('name', $validated['name'])->where('user_id', auth()->id())->exists()) {
-            $validated['name'] = $validated['name'] . ' ' . now()->format('Y-m-d H:i:s');
-        }
+        // if (Game::where('name', $validated['name'])->where('user_id', auth()->id())->exists()) {
+        //     $validated['name'] = $validated['name'] . ' ' . now()->format('Y-m-d H:i:s');
+        // }
 
-        $date_start = now();
+        //imposto la data di inizio del gioco al primo giorno del mese corrente
+        //(altrimenti se si inizia a giocare a fine mese poco dopo si devono già pagare gli stipendi)
+        $date_start = Carbon::now()->startOfMonth();
 
         //crea un nuovo gioco
         $game = new Game($validated);
